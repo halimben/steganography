@@ -104,3 +104,33 @@ def generat_png(width, high, final_rows):
 
 generat_png(width, high, final_rows)
 
+def decode (path):
+    width, high, rows, red_pixels = read_png_file(path)
+    
+    i=0
+    new_list=[]
+    # insert every 8 value of red color in list of list
+    while i < len(red_pixels):
+        new_list.append(red_pixels[i:i+8])
+        i+=8
+    coded_values=[]
+    # cheeck end of texte (first 8 value pair)
+    for e in new_list:
+        if(any(n % 2 == 1 for n in e)):
+            coded_values.append(e) # insert 8 value that contain any unpair
+        else:
+            break # end of message
+    
+    bin_string = ''
+    full_text = ''
+    for x in coded_values:
+        bin_string = bin_string + ''.join(map(str,[item % 2 for item in x])) # concatenate binary
+
+    full_text = ''.join(chr(int(bin_string[i*8:i*8+8],2)) for i in range(len(bin_string)//8)) # binary to string
+    return full_text
+
+
+print(decode('png_message.png'))
+
+
+################## Main Function ##################
