@@ -14,9 +14,9 @@ Python program that hide text in png file.<br />
  **2. Execution and options:**
  
  - Mode write:
- > Prgram wil ask for arguments if they are not specified
+ 
 ```console
-$  python main.py -w encoded_png.png                                    
+$  python main.py -w encoded_png.png  # Prgram wil ask for arguments if they are not specified                              
 ``` 
   
     $  Enter your PNG path:
@@ -24,16 +24,16 @@ $  python main.py -w encoded_png.png
     $  Enter your text:
       hello word
 
-> Encode Your_text in png.png, output= encoded_png.png
+
 ```console 
-$  python main.py png.png -w -f pnp.png -t "Your_text" encoded_png.png  
+$  python main.py png.png -w -f pnp.png -t "Your_text" encoded_png.png  # Encode Your_text in png.png, output= encoded_png.png
 ``` 
 
 
 - Mode read:
-> Decode text hidden in encoded_png.png
+
 ```console 
-$  python main.py encoded_png.png                                       
+$  python main.py encoded_png.png   # Decode text hidden in encoded_png.png                                       
 ```
  
  
