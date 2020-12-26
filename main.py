@@ -1,7 +1,7 @@
 import sys
 sys.path.append('pypng-main\code')
 import png
-
+import argparse
 
 
 def read_png_file(filepath):
@@ -24,8 +24,7 @@ def textToBin(text):
 
 
 
-# ajuster les pixels rouge vers des nombre pair
-def adjust_to_pair(list):
+def adjust_to_even(list):
     adjusted_list = []
     for i in list:
         if((int(i) % 2) != 0):
@@ -57,15 +56,18 @@ def adapt_rows(rgba_rows):
 
 
 
-def set_red_pixels(red_list, rows):
-    w = 20
-    h = 21
+def set_red_pixels(red_list, rows, w, h):
+    print(rows)
+    print('----------')
+    #w = 20
+    #h = 21
     m = 0
     s = 0
     for i in range(0, h):
         n = 0
         l = list(rows[m])   #convert tuple to list in order to edit it
         for j in range(0, w):
+            print(l[n] , red_list[s])
             l[n] = red_list[s] # edit the red value
             #print(l[n] ,'=', red_list[s])
             n += 4 # index of red pixels
@@ -73,13 +75,14 @@ def set_red_pixels(red_list, rows):
         #print('**: ',l)
         rows[m] = tuple(l) #insert the list as tuple
         m += 1
+    print(rows)
     return rows
 
 
 
-def generat_png(width, high, final_rows):
+def generat_png(width, high, final_rowsn, name):
     w = png.Writer(width, high, greyscale=False, alpha=True)
-    f = open('png_message.png', 'wb')
+    f = open(name, 'wb')
     w.write(f, adapt_rows(final_rows))
     f.close()
 
@@ -94,10 +97,10 @@ def decode (path):
         new_list.append(red_pixels[i:i+8])
         i += 8
     coded_values=[]
-    # cheeck end of texte (first 8 value pair)
+    # cheeck end of texte (first 8 value ever)
     for e in new_list:
         if(any(n % 2 == 1 for n in e)):
-            coded_values.append(e) # insert 8 value that contain any unpair
+            coded_values.append(e) # insert 8 value that contain any unever number
         else:
             break # end of message
     bin_string = ''
@@ -111,41 +114,70 @@ def decode (path):
 
 ################## Main Function ##################
 if __name__ == "__main__":
+    
+    # Parse argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument("image", help='image path')
+    parser.add_argument("-txt", '--text', help='text to encode')
+    parser.add_argument("-out", '--output', help='image and text encoded', type=str)
+    args = parser.parse_args()
+    
+    if args.image and args.text:
+         # get image infos
+        width, high, rows, red_pixels = read_png_file(args.image)
+
+        # convert text to binary
+        textbin = []
+        textbin = textToBin(args.text)
+
+        # adjust red_pixels to get pair values
+        redPixels_adjusted = adjust_to_even(red_pixels)
+
+        # encode (red_pixels + binary text) 
+        redPixels_adjusted = encode(redPixels_adjusted, textbin)
+
+        # adpat rows to format (list of tuple)
+        rows_adapted = adapt_rows(rows) 
+
+        # insert red_pixels encoded in rows
+        final_rows =  set_red_pixels(redPixels_adjusted, rows_adapted, width, high)  
+
+        # generate image
+        generat_png(width, high, final_rows, args.output)
+    if args.image  and not args.text:
+        print(decode(args.image))
+    '''
 
     # get image infos
-    width, high, rows, red_pixels = read_png_file('monpng.png')
-    print('width: ', width)
-    print('high: ', high)
-    print('rows: ', rows)
-    print('red_pixels: ', red_pixels)
+    width, high, rows, red_pixels = read_png_file('tst.png')
 
     # convert text to binary
     textbin = []
-    textbin = textToBin('benikhlef halim, vous allez bien')
-    print('-----------------------')
-    print('text binaire', textbin)
+    textbin = textToBin('halim')
 
     # adjust red_pixels to get pair values
-    redPixels_adjusted = adjust_to_pair(red_pixels)
-    print('-----------------------')
-    print('les pixels ajuster (rendre pair): ', redPixels_adjusted)
-
+    redPixels_adjusted = adjust_to_even(red_pixels)
+    print('-----')
+    print(redPixels_adjusted)
+    print(textbin)
     # encode (red_pixels + binary text) 
-    print('---------ajout de text binaire dans red colors------------')
     redPixels_adjusted = encode(redPixels_adjusted, textbin)
+    print('---red + bin--')
     print(redPixels_adjusted)
 
     # adpat rows to format (list of tuple)
-    rows_adapted = adapt_rows(rows)
-    print('--------------------------------')  
-    print('tous les pixels en tuple(formt adapté) :', rows_adapted)
+    rows_adapted = adapt_rows(rows) 
+    print('---adapted--')
+    print(rows_adapted)
 
     # insert red_pixels encoded in rows
-    final_rows =  set_red_pixels(redPixels_adjusted, rows_adapted)  
-    print ('------------------------------------------') 
-    print ('aprés l insertion de text:', final_rows[0])
-
+    final_rows =  set_red_pixels(redPixels_adjusted, rows_adapted, width, high)  
+    print('---insert red coded--')
+    print(rows_adapted)
     # generate image
-    generat_png(width, high, final_rows)
+    generat_png(width, high, final_rows, 'png_message.png')
 
     print(decode('png_message.png'))
+    '''
+
+
