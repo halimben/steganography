@@ -12,7 +12,7 @@ def read_png_file(filepath):
     
     red_pixels = []
     for j in rows:
-        for red in range (0, len(j), 4):
+        for red in range (0, len(j)):
             red_pixels.append(j[red])
     return width, height, rows , red_pixels 
 
@@ -51,18 +51,34 @@ def adapt_rows(rows):
         pixels_adapted.append(rgba_pixels)
     return pixels_adapted
 
+def adapt_rows2(rows,w):
+    tmp = []
+    tmp2 = []
+    for j in range(0,len(rows)):
+        tmp.append(rows[j])
+        print(rows[j])
+        if(len(tmp)==w*4 and j!=0):
+            print('ok',len(tmp))
+            tmp2.append(tuple(tmp))
+            tmp.clear()
+    return tmp2
+
 
 # Replace red pixels by the new one which contain binary
 def set_red_pixels(red_list, rows, w, h):
+    print (red_list)
+    print ("r o w s ::::: ",rows)
+    
     m = 0
     s = 0
+    #print(rows)
     for i in range(0, h):
         n = 0
         l = list(rows[m])   #convert tuple to list in order to edit it
         for j in range(0, w):
             print(l[n] , red_list[s])
             l[n] = red_list[s] # edit the red value
-            n += 4 # index of red pixels
+            n += 1 # index of red pixels
             s += 1
         rows[m] = tuple(l) #insert the list as tuple
         m += 1
@@ -87,7 +103,7 @@ def decode (path):
         new_list.append(red_pixels[i:i+8])
         i += 8
     coded_values=[]
-    # cheeck end of texte (first 8 value ever)
+    # cheeck end of message (first 8 value ever)
     for e in new_list:
         if(any(n % 2 == 1 for n in e)):
             coded_values.append(e) # insert 8 value that contain any unever number
@@ -107,32 +123,33 @@ if __name__ == "__main__":
     
     # Parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("image", help='image path')
-    parser.add_argument("-txt", '--text', help='text to encode')
-    parser.add_argument("-out", '--output', help='image and text encoded', type=str)
+    parser.add_argument("-w", '--write', action='store_true', help='mode write')
+    parser.add_argument("-f", '--image', help='image path')
+    parser.add_argument("-t", '--text', help='text to encode')
+    parser.add_argument('output', help='image and text encoded')
     args = parser.parse_args()
     
-    if args.image and args.text:
-         # get image infos
-        width, high, rows, red_pixels = read_png_file(args.image)
-
+    if args.write:
+        if args.image and args.text:
+            image = args.image
+            text = args.text
+        else:
+            image = input("Enter your PNG path: ") 
+            text = input("Enter your text: ") 
+        # get image infos
+        width, high, rows, rgba_list = read_png_file(image)
         # Convert text to binary
-        textbin = textToBin(args.text)
-
-        # Adjust red_pixels to get even values
-        redPixels_adjusted = adjust_to_even(red_pixels)
-
+        textbin = textToBin(text)
+        # Adjust rgba_pixels to get even values
+        rgba_adjusted = adjust_to_even(rgba_list)
         # Encode (red_pixels + binary text) 
-        redPixels_adjusted = encode(redPixels_adjusted, textbin)
-
+        rgba_adjusted = encode(rgba_adjusted, textbin)
+        
         # Adpat rows to format (list of tuple)
-        rows_adapted = adapt_rows(rows) 
+        rows_adapted = adapt_rows2(rgba_list, width) 
 
-        # Repelace red_pixels by the encoded ones
-        final_rows =  set_red_pixels(redPixels_adjusted, rows_adapted, width, high)  
+        generat_png(width, high, rows_adapted, args.output)
 
-        # Generate image
-        generat_png(width, high, final_rows, args.output)
-    if args.image  and not args.text:
+    if not args.write:
         # encode image
-        print(decode(args.image))
+        print(decode(args.output))
