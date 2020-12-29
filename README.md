@@ -3,10 +3,10 @@ Python program that hides text in png file.<br />
 
 **1. Steps:**<br />
 
-  Get the red pixels from a png file and make them evens values.<br />
-  Convert message into binary and add it to red pixels.<br />
-  Generate a png file from the new rows how contain red pixels and binary text.<br />
-  To decode we check the red values until we find the first series of 8 even values (end of message).<br />
+  Get the rgba chanels from a png file and make them evens values.<br />
+  Convert message into binary and add it to rgba values.<br />
+  Generate a png file from the new rows which contain (rgba + binary).<br />
+  To decode we check the rgba values until we find the first series of 8 even values (end of message).<br />
   From the significant pixels we extract the binary value added before and convert it to string.<br />
   
  
