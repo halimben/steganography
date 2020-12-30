@@ -13,8 +13,8 @@ def read_png_file(filepath):
     
     list_rgba = []
     for j in rows:
-        for red in range (0, len(j)):
-            list_rgba.append(j[red])
+        for color in range (0, len(j)):
+            list_rgba.append(j[color])
     return width, height, rows , list_rgba 
 
 
