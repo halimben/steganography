@@ -27,7 +27,7 @@ $  python main.py -w encoded_png.png
 or
 
 ```console 
-$  python main.py png.png -w -f pnp.png -t "Your_text" encoded_png.png
+$  python main.py -w -f png.png -t "Your_text" encoded_png.png
 ``` 
 
 <br />
