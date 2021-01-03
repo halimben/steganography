@@ -1,3 +1,9 @@
+"""
+Name : main.py
+Author : Halim BENIKHLEF
+Time    : 03/01/2021 20:12
+Desc: encode text in png file
+"""
 import sys
 import os
 sys.path.append(os.path.join('pypng-main','code'))
@@ -6,6 +12,15 @@ import argparse
 
 # Read a png file and return its width, height, rows and lis of rgba values
 def read_png_file(filepath):
+    '''
+    read a png file
+            Parameters:
+                    filepath (path): a png path
+            Returns:
+                    width (int): width of the png file
+                    height (int): height of the png file
+                    list_rgba (list): list of rgba values
+    '''
     data = png.Reader(filename=filepath).asRGBA8()
     width = data[0]
     height = data[1]
@@ -15,18 +30,30 @@ def read_png_file(filepath):
     for j in rows:
         for color in range (0, len(j)):
             list_rgba.append(j[color])
-    return width, height, rows , list_rgba 
+    return width, height , list_rgba 
 
 
-# Transforme text to binary
 def textToBin(text):
-    b = []
-    b.append([(bin( ord(c) )[2:].rjust(8, '0')) for c in text])
-    return b[0]
+    '''
+    convert text to binary
+            Parameters:
+                    text (str): text to convert
+            Returns:
+                    b (str): string of binary, each char in one byte
+    '''
+    b = ''
+    b = b.join([(bin( ord(c) )[2:].rjust(8, '0')) for c in text])
+    return b
 
 
-# rgba odd values to even 
 def adjust_to_even(list_rgba):
+    '''
+    make all values even
+            Parameters:
+                    list_rgba (list): rgba values
+            Returns:
+                    list_rgba (list): rgba even values
+    '''
     for i in range(len(list_rgba)):
         if((int(list_rgba[i]) % 2) != 0):
             list_rgba[i] = list_rgba[i] -1
@@ -34,49 +61,75 @@ def adjust_to_even(list_rgba):
 
 
 # Encode by adding binary text to  lowest-weight bits of each channel
-def encode(list_rgba, textbin):
-    # Adjust rgba_pixels to get even values
+def encode(list_rgba, message_bin):
+    '''
+    encode a message by adding each bit in color value
+            Parameters:
+                    list_rgba (list): rgba values
+                    message_bin (str): string of binary
+            Returns:
+                    rgba_encoded (list): rgba values + binary string
+    '''
+    if(len(list_rgba) - 8 < len(message_bin)):
+        raise Exception('text too long to encode in png file')
     rgba_encoded = []
     rgba_encoded = adjust_to_even(rgba_list)
-    binary=''
-    # binary concatenate
-    for byte in textbin:
-        for bit in byte:
-            binary = binary + bit
-    # Add chanel value with bits
-    for j in range(0 , len(binary)):
-        rgba_encoded[j] = rgba_encoded[j] + int(binary[j])
+
+    for j in range(0 , len(message_bin)):
+        rgba_encoded[j] = rgba_encoded[j] + int(message_bin[j])
     return rgba_encoded
 
     
-# Transforme rows to list of tuple
-def adapt_rows(rows, width):
+def adapt_rows(rgba_encoded, width):
+    '''
+    adapt rows to reconstitute a png file
+            Parameters:
+                    rgba_encoded (list): rgba values list
+                    width (int): png width
+            Returns:
+                    tuple_list (list of tuples): format adpated to write
+    '''
     tmp = []
     tuple_list = []
-    for j in range(0, len(rows)):
-        tmp.append(rows[j])
+    for j in range(0, len(rgba_encoded)):
+        tmp.append(rgba_encoded[j])
         if(len(tmp) == width*4 and j != 0):
             tuple_list.append(tuple(tmp))
             tmp.clear()
     return tuple_list
 
 
-# Create png file from rows adapted
-def generat_png(width, high, final_rows, name):
-    w = png.Writer(width, high, greyscale=False, alpha=True)
+def generat_png(width, height, rgba_encoded, name):
+    '''
+    Create a png file form the rgba_encoded
+            Parameters:
+                    width (int): png width
+                    height (int): height width
+                    rgba_encoded (list): rgba values list                 
+            Returns:
+                    none
+    '''
+    w = png.Writer(width, height, greyscale=False, alpha=True)
     f = open(name, 'wb')
-    w.write(f, adapt_rows(final_rows, width))
+    w.write(f, adapt_rows(rgba_encoded, width))
     f.close()
 
 
 # Decode function from a PNG it return full text hidden
 def decode (path):
-    width, height, rows, red_pixels = read_png_file(path)    
+    '''
+    Decode the png file and get cleartext
+            Parameters:
+                    path (path): png width                 
+            Returns:
+                    full_text (str): cleartext message
+    '''
+    width, height, list_rgba = read_png_file(path)    
     i = 0
     new_list = []
     # insert every 8 value of colors in list of list
-    while i < len(red_pixels):
-        new_list.append(red_pixels[i:i+8])
+    while i < len(list_rgba):
+        new_list.append(list_rgba[i:i+8])
         i += 8
     coded_values=[]
     # Check end of message (first 8 value all even)
@@ -114,17 +167,17 @@ if __name__ == "__main__":
             text = input("Enter your text: ") 
 
         # get PNG infos
-        width, height, rows, rgba_list = read_png_file(image)
+        width, height, rgba_list = read_png_file(image)
 
         # Convert text to binary
-        textbin = textToBin(text)
+        message_bin = textToBin(text)
         
-        # Encode (red_pixels + binary text) 
-        rgba_encoded = encode(rgba_list, textbin)
+        # Encode (rgba_pixels + binary text) 
+        rgba_encoded = encode(rgba_list, message_bin)
         
         # Generat new PNG file
         generat_png(width, height, rgba_encoded, args.output)
 
     if not args.write:
-        # encode image
+        # encode png
         print(decode(args.output))
